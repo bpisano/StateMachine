@@ -6,9 +6,11 @@
 //
 
 import Foundation
+@preconcurrency import Combine
 
-@MainActor
-public final class StateMachine<Context: StateMachineContext> {
+public typealias StateMachine = ContextualStateMachine<EmptyStateMachineContext>
+
+public final actor ContextualStateMachine<Context: StateMachineContext> {
     public var currentState: StateMachineState {
         get { currentStateWrapper.state }
         set {
@@ -19,11 +21,20 @@ public final class StateMachine<Context: StateMachineContext> {
             )
         }
     }
+    public var currentStatePublisher: AnyPublisher<StateMachineState, Never> {
+        currentStateWrapperPublisher
+            .map(\.state)
+            .eraseToAnyPublisher()
+    }
 
     private let initialState: StateMachineState
     private let context: Context
     private let transitionHandler: StateTransitionHandler = .init()
-    private var currentStateWrapper: StateMachineStateWrapper<Context>
+    private var currentStateWrapper: StateMachineStateWrapper<Context> {
+        get { currentStateWrapperPublisher.value }
+        set { currentStateWrapperPublisher.send(newValue) }
+    }
+    private let currentStateWrapperPublisher: CurrentValueSubject<StateMachineStateWrapper<Context>, Never>
 
     public init(
         initialState: StateMachineState,
@@ -31,30 +42,34 @@ public final class StateMachine<Context: StateMachineContext> {
     ) {
         self.initialState = initialState
         self.context = context
-        self.currentStateWrapper = .init(
-            state: initialState,
-            transitionHandler: transitionHandler,
-            context: context
+        self.currentStateWrapperPublisher = .init(
+            .init(
+                state: initialState,
+                transitionHandler: transitionHandler,
+                context: context
+            )
         )
     }
 
-    public func start() async {
-        transitionHandler.onTransition { [weak self] newState in
+    func start() async {
+        await transitionHandler.onTransition { [weak self] newState in
             guard let self else { return }
             await self.transition(to: newState)
         }
+        currentStateWrapper.makeInjection()
         await initialState.enter()
     }
 
-    private func transition(to newState: StateMachineState) async {
+    func transition(to newState: StateMachineState) async {
         await currentState.exit()
         currentState = newState
+        currentStateWrapper.makeInjection()
         await currentState.enter()
     }
 }
 
-extension StateMachine where Context == EmptyStateMachineContext {
-    public convenience init(initialState: StateMachineState) {
+extension ContextualStateMachine where Context == EmptyStateMachineContext {
+    init(initialState: StateMachineState) {
         self.init(
             initialState: initialState,
             context: .init()

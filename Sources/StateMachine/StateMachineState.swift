@@ -7,7 +7,6 @@
 
 import Foundation
 
-@MainActor
 public protocol StateMachineState: Sendable {
     func enter() async
     func exit() async

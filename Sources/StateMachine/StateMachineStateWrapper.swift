@@ -7,24 +7,12 @@
 
 import Foundation
 
-@MainActor
-struct StateMachineStateWrapper<Context: StateMachineContext>: Sendable {
+struct StateMachineStateWrapper<Context: StateMachineContext> {
     let state: StateMachineState
     let transitionHandler: StateTransitionHandler
     let context: Context
 
-    init(
-        state: StateMachineState,
-        transitionHandler: StateTransitionHandler,
-        context: Context
-    ) {
-        self.state = state
-        self.transitionHandler = transitionHandler
-        self.context = context
-        makeInjection()
-    }
-
-    private func makeInjection() {
+    func makeInjection() {
         let mirror: Mirror = .init(reflecting: state)
         for child in mirror.children {
             if let propertyWrapper = child.value as? StateTransition {

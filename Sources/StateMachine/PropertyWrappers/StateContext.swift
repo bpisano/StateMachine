@@ -5,8 +5,8 @@
 //  Created by Benjamin Pisano on 05/03/2025.
 //
 
+import Foundation
 
-@MainActor
 @propertyWrapper
 public final class StateContext<Context: StateMachineContext> {
     public var wrappedValue: Context {

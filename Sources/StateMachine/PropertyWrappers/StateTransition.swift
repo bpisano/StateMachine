@@ -7,7 +7,6 @@
 
 import Foundation
 
-@MainActor
 @propertyWrapper
 public final class StateTransition {
     public var wrappedValue: StateTransitionHandler {
