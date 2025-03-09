@@ -82,7 +82,7 @@ This context can be accessed from your states by using the `@StateContext` prope
 ```swift
 struct OnState: StateMachineState {
     @StateTransition private var transition
-    @StateContext private var context: MyContext
+    @StateContext(MyContext.Self) private var context
 
     func enter() async {
         print("ON")
