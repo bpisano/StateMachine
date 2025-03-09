@@ -10,7 +10,8 @@ import Foundation
 
 public typealias StateMachine = ContextualStateMachine<EmptyStateMachineContext>
 
-public final actor ContextualStateMachine<Context: StateMachineContext> {
+@MainActor
+public final class ContextualStateMachine<Context: StateMachineContext> {
     public var currentState: StateMachineState {
         get { currentStateWrapper.state }
         set {
@@ -22,8 +23,8 @@ public final actor ContextualStateMachine<Context: StateMachineContext> {
         }
     }
     public var currentStatePublisher: AnyPublisher<StateMachineState, Never> {
-        currentStateWrapperPublisher
-            .map(\.state)
+        Just(currentState)
+            .merge(with: currentStateWrapperPublisher.map(\.state))
             .eraseToAnyPublisher()
     }
 
@@ -31,28 +32,27 @@ public final actor ContextualStateMachine<Context: StateMachineContext> {
     private let context: Context
     private let transitionHandler: StateTransitionHandler = .init()
     private var currentStateWrapper: StateMachineStateWrapper<Context> {
-        get { currentStateWrapperPublisher.value }
-        set { currentStateWrapperPublisher.send(newValue) }
+        didSet {
+            currentStateWrapperPublisher.send(currentStateWrapper)
+        }
     }
-    private let currentStateWrapperPublisher: CurrentValueSubject<StateMachineStateWrapper<Context>, Never>
+    private let currentStateWrapperPublisher: PassthroughSubject<StateMachineStateWrapper<Context>, Never> = .init()
 
-    public init(
+    public nonisolated init(
         initialState: StateMachineState,
         context: Context
     ) {
         self.initialState = initialState
         self.context = context
-        self.currentStateWrapperPublisher = .init(
-            .init(
-                state: initialState,
-                transitionHandler: transitionHandler,
-                context: context
-            )
+        self.currentStateWrapper = .init(
+            state: initialState,
+            transitionHandler: transitionHandler,
+            context: context
         )
     }
 
-    func start() async {
-        await transitionHandler.onTransition { [weak self] newState in
+    public func start() async {
+        transitionHandler.onTransition { [weak self] newState in
             guard let self else { return }
             await self.transition(to: newState)
         }
@@ -60,7 +60,7 @@ public final actor ContextualStateMachine<Context: StateMachineContext> {
         await initialState.enter()
     }
 
-    func transition(to newState: StateMachineState) async {
+    public func transition(to newState: StateMachineState) async {
         await currentState.exit()
         currentState = newState
         currentStateWrapper.makeInjection()
@@ -68,8 +68,8 @@ public final actor ContextualStateMachine<Context: StateMachineContext> {
     }
 }
 
-extension ContextualStateMachine where Context == EmptyStateMachineContext {
-    init(initialState: StateMachineState) {
+public extension ContextualStateMachine where Context == EmptyStateMachineContext {
+    convenience nonisolated init(initialState: StateMachineState) {
         self.init(
             initialState: initialState,
             context: .init()

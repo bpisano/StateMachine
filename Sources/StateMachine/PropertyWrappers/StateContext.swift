@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 @propertyWrapper
 public final class StateContext<Context: StateMachineContext> {
     public var wrappedValue: Context {
@@ -19,7 +20,7 @@ public final class StateContext<Context: StateMachineContext> {
 
     private var context: Context?
 
-    public init() { }
+    public nonisolated init(_ context: Context.Type) { }
 
     func inject(context: Context) {
         self.context = context

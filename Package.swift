@@ -5,11 +5,11 @@ import PackageDescription
 let package = Package(
     name: "StateMachine",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .watchOS(.v6),
-        .tvOS(.v13),
-        .macCatalyst(.v13),
+        .iOS(.v15),
+        .macOS(.v12),
+        .watchOS(.v8),
+        .tvOS(.v15),
+        .macCatalyst(.v15),
         .visionOS(.v1)
     ],
     products: [
@@ -19,6 +19,10 @@ let package = Package(
         ),
     ],
     targets: [
-        .target(name: "StateMachine")
+        .target(name: "StateMachine"),
+        .testTarget(
+            name: "StateMachineTests",
+            dependencies: [.target(name: "StateMachine")]
+        )
     ]
 )

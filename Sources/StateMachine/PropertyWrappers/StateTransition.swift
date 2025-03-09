@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 @propertyWrapper
 public final class StateTransition {
     public var wrappedValue: StateTransitionHandler {
@@ -19,7 +20,7 @@ public final class StateTransition {
 
     private var transitionHandler: StateTransitionHandler?
 
-    public init() { }
+    public nonisolated init() { }
 
     func inject(transitionHandler: StateTransitionHandler) {
         self.transitionHandler = transitionHandler

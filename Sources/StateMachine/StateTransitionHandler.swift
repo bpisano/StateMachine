@@ -7,7 +7,8 @@
 
 import Foundation
 
-public final actor StateTransitionHandler: Sendable {
+@MainActor
+public final class StateTransitionHandler {
     typealias Handler = @Sendable (_ newState: StateMachineState) async -> Void
 
     private var transitionHandler: Handler?
