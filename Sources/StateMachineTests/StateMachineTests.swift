@@ -25,7 +25,7 @@ final class StateMachineTests {
     @Test()
     func stateContextInstantStop() async throws {
         let stateMachine: ContextualStateMachine<Context> = .init(
-            initialState: OnContextuatlState(),
+            initialState: OnContextualState(),
             context: .init(shouldStopInstantaneously: true)
         )
         await stateMachine.start()
@@ -43,7 +43,7 @@ final class StateMachineTests {
     @Test()
     func stateContextDelayedStop() async throws {
         let stateMachine: ContextualStateMachine<Context> = .init(
-            initialState: OnContextuatlState(),
+            initialState: OnContextualState(),
             context: .init(shouldStopInstantaneously: false)
         )
         await stateMachine.start()

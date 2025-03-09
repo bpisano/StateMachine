@@ -9,7 +9,7 @@ import Foundation
 import StateMachine
 
 @MainActor
-struct OnContextuatlState: StateMachineState {
+struct OnContextualState: StateMachineState {
     @StateTransition private var transition
     @StateContext(Context.self) private var context
 
